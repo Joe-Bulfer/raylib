@@ -32,14 +32,20 @@ typedef struct { //in world before collected
     bool collected;
 } Item;
 #define MAX_STICKS 100 
-Item sticksArray[MAX_STICKS]; 
+#define STACK_SIZE 64
+//Item sticksArray[MAX_STICKS]; 
+Item sticksArray[MAX_STICKS] = {
+    {{20, 397, 20, 10}, BROWN, false},
+    {{50, 397, 20, 10}, BROWN, false},
+    {{310, 397, 20, 10}, BROWN, false},
+    {{300, 200, 20, 10}, BROWN, false}
+};
 int sticksCount = 0; //length of array
 
-//will I need this?
 typedef struct { //in inventory after collected
     Item item;
     int count;
-} ItemSlot;
+} ItemStack, stickStack[MAX_STICKS];
 /*
 
 void UpdateAnimation(Animation *anim) {
@@ -125,15 +131,11 @@ bool topCollision = false;
 bool showDebugInfo = true;
 
 //items
-//Item sticks = {{ 50, 397, 20, 10 }, BROWN };
-/*
-Item sticksArray[0] = {{ 20, 397, 20, 10 }, BROWN };
-Item sticksArray[1] = {{ 50, 397, 20, 10 }, BROWN };
-Item sticksArray[2] = {{ 310, 397, 20, 10 }, BROWN };
-Item sticksArray[3] = {{ 300, 200, 20, 10 }, BROWN };
-*/
+Item sticks = {{ 50, 397, 20, 10 }, BROWN };
+
 Item trunk = {{ 90, 320, 25, 80 }, BROWN };
 Item leaves = {{ 80, 300, 45, 80 }, GREEN };
+
 int main(void)
 {
     const int screenWidth = 1400;
@@ -281,13 +283,24 @@ int main(void)
 
             // environment
             for (int i = 0; i < envItemsLength; i++) DrawRectangleRec(envItems[i].rect, envItems[i].color);
+
             // non collectable items
-            //if (CheckCollisionRecs(stick.rect, player.rect)) sticks.collected = true;
             DrawRectangleRec(trunk.rect, trunk.color);
             DrawRectangleRec(leaves.rect, leaves.color);
+
+            // sticksArray test
+	     for (int i = 0; i < MAX_STICKS; i++){
+		    if (CheckCollisionRecs(sticksArray[i].rect, player.rect)) sticksArray[i].collected = true;
+		    if (!sticksArray[i].collected){
+			    DrawRectangleRec(sticksArray[i].rect, sticksArray[i].color);
+	     }
             // items
-            //if (CheckCollisionRecs(sticks.rect, player.rect)) sticks.collected = true;
-            //if (!sticks.collected) DrawRectangleRec(sticks.rect, sticks.color);
+	    }
+	    //if (CheckCollisionRecs(sticks.rect, player.rect)) sticks.collected = true;
+	    //if (!sticks.collected){
+		    //DrawRectangleRec(sticks.rect, sticks.color);
+	    //}
+
             // player
             DrawTextureRec(playerTex, frameRec, position, WHITE);  //  how do I scale this?
             //DrawRectangleRec(player.rect, BLUE); //old thing before animation
@@ -308,15 +321,16 @@ int main(void)
             DrawText(TextFormat("currentFrame - %.2f",currentFrame),DB_X,DB_Y+150,DB_F,DB_CL);
             //DrawText(TextFormat("frameSpeed - %.2f",frameSpeed),DB_X,DB_Y+25,DB_CL);
             DrawText(TextFormat("framesCounter - %.2f",framesCounter),DB_X,DB_Y+175,DB_F,DB_CL);
+        DrawText(TextFormat("Ready To Poop: 23%"),DB_X,DB_Y+200,DB_F,DB_CL);
         }
         // inventory
-        //if (sticks.collected) DrawText(("Sticks: 1"),100,30,30,BLUE);
+    	int blah = sizeof(sticksArray)/sizeof(sticksArray[0]);
+        DrawText(TextFormat("Sticks: %d",blah),100,30,30,DARKBLUE);
         EndDrawing();
         //-----------------------------------------------------
     }
 
     CloseWindow();        // Close window and OpenGL context
-
     return 0;
 }
 
