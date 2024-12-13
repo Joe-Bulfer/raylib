@@ -1,3 +1,4 @@
+//now you can pick up sticks. Next integrate existing place block feature to place sticks
 #include "raylib.h"
 #include "raymath.h"
 #include "stdlib.h"
@@ -31,84 +32,16 @@ typedef struct { //in world before collected
     Color color;
     bool collected;
 } Item;
-#define MAX_STICKS 100 
+#define MAX_STICKS 4
 #define STACK_SIZE 64
 //Item sticksArray[MAX_STICKS]; 
+Item collectedSticksArray[MAX_STICKS];
 Item sticksArray[MAX_STICKS] = {
     {{20, 397, 20, 10}, BROWN, false},
     {{50, 397, 20, 10}, BROWN, false},
     {{310, 397, 20, 10}, BROWN, false},
     {{300, 200, 20, 10}, BROWN, false}
 };
-int sticksCount = 0; //length of array
-
-typedef struct { //in inventory after collected
-    Item item;
-    int count;
-} ItemStack, stickStack[MAX_STICKS];
-/*
-
-void UpdateAnimation(Animation *anim) {
-    anim->currentDelay++;
-    if (anim->currentDelay >= anim->frameDelay) {
-        anim->currentDelay = 0;
-        anim->currentFrame++;
-        if (anim->currentFrame >= anim->frameCount) anim->currentFrame = 0;
-    }
-}
-
-        if (IsKeyDown(KEY_A)){
-            moving = true;
-            player.rect.x -= 3;
-            frameRec.width = -(float)playerTex.width / 4;  // Negate to flip left
-            frameRec.x = (float)(currentFrame + 1) * (float)playerTex.width / 4; 
-        }
-        else if (IsKeyDown(KEY_D)){
-            moving = true;
-            player.rect.x += 3;
-            frameRec.width = (float)playerTex.width / 4;  // Flip it right
-            frameRec.x = (float)(currentFrame + 1) * (float)playerTex.width / 4; 
-        }
-        else moving = false;
-        //#######animation
-
-        if (moving){
-            framesCounter++;
-            //framesSpeed += 0.8;
-            //  currentDelay?        framesDelay?
-            if (framesCounter >= (60/framesSpeed))
-            {
-                framesCounter = 0;
-                currentFrame = (currentFrame + 1) % 4;
-
-                frameRec.x = (float)currentFrame*(float)playerTex.width/4;
-            }
-        }
-        else if (!moving && player.canJump){
-            //framesSpeed = 1;
-            currentFrame = 3;
-            frameRec.x = (float)currentFrame * (float)playerTex.width / 4;  // Update frame rectangle for standing
-        }
-
-	if (IsKeyPressed(KEY_SPACE) && player.canJump)
-	{
-                topCollision = false;
-		player.speed = -400;
-		player.canJump = false;
-	}
-
-        
-        if (!topCollision) {
-                currentFrame = 2;
-                frameRec.x = (float)(currentFrame) * (float)playerTex.width / 4; // Jump frame (index 2)
-		player.rect.y += player.speed * deltaTime;
-		player.speed += G*deltaTime;
-		player.canJump = false;
-        }
-*/
-// TEST END -------------------
- 
-
 
 typedef struct Player {
 	Rectangle rect;
@@ -130,18 +63,13 @@ bool topCollision = false;
 
 bool showDebugInfo = true;
 
-//items
-Item sticks = {{ 50, 397, 20, 10 }, BROWN };
-
-Item trunk = {{ 90, 320, 25, 80 }, BROWN };
-Item leaves = {{ 80, 300, 45, 80 }, GREEN };
 
 int main(void)
 {
     const int screenWidth = 1400;
     const int screenHeight = 850;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - collision area");
+    InitWindow(screenWidth, screenHeight, "fucking awesome cat game");
 
     Player player = { 0 };
     player.rect = (Rectangle){ PLAYER_START_X, PLAYER_START_Y,30,30 }; //start position
@@ -159,8 +87,14 @@ int main(void)
     int framesCounter; //start at first frame 
     bool moving; //walking left or right with A or D
 
+    //first 5 items are non blocking/background, start with int i = 5 in collision loop
     EnvItem envItems[] = {
+ 	    // pretty trees
             {{ -1000, -100, 3000, 500 }, SKYBLUE }, //background
+	    {{ 90, 320, 25, 80 }, BROWN },
+	    {{ 80, 300, 45, 80 }, GREEN },
+	    {{ -90, 320, 25, 80 }, BROWN },
+	    {{ -100, 300, 45, 80 }, GREEN },
             {{ -1000, 400, 3000, 200 }, DARKGREEN }, //floor
         /* 3 pixel staggered vertically to climb steps
             {{ 160, 397, 10,10 }, GRAY }, //steps
@@ -175,7 +109,6 @@ int main(void)
             {{ 250, 300, 100, 10 }, DARKBROWN },
             {{ 650, 300, 100, 10 }, DARKBROWN },
 
-            //{{ 50, 397, 20, 10 }, BROWN }, //sticks test
     };
 
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
@@ -284,30 +217,22 @@ int main(void)
             // environment
             for (int i = 0; i < envItemsLength; i++) DrawRectangleRec(envItems[i].rect, envItems[i].color);
 
-            // non collectable items
-            DrawRectangleRec(trunk.rect, trunk.color);
-            DrawRectangleRec(leaves.rect, leaves.color);
+            // non collectable items, just trees for now
+            //DrawRectangleRec(trunk.rect, trunk.color);
+            //DrawRectangleRec(leaves.rect, leaves.color);
 
-            // sticksArray test
+            // sticksArray in world before collected
 	     for (int i = 0; i < MAX_STICKS; i++){
-		    if (CheckCollisionRecs(sticksArray[i].rect, player.rect)) sticksArray[i].collected = true;
+		    if (CheckCollisionRecs(sticksArray[i].rect, player.rect)){
+			    sticksArray[i].collected = true;
+		    };
 		    if (!sticksArray[i].collected){
 			    DrawRectangleRec(sticksArray[i].rect, sticksArray[i].color);
 	     }
-            // items
 	    }
-	    //if (CheckCollisionRecs(sticks.rect, player.rect)) sticks.collected = true;
-	    //if (!sticks.collected){
-		    //DrawRectangleRec(sticks.rect, sticks.color);
-	    //}
-
             // player
             DrawTextureRec(playerTex, frameRec, position, WHITE);  //  how do I scale this?
             //DrawRectangleRec(player.rect, BLUE); //old thing before animation
-
-        // inventory - idk to put this before or after EndMode2D
-        //if (sticks.collected) DrawText(("Sticks: 1"),10,10,20,BLUE);
-        //if (sticks.collected) sticksCollected++;
 
 	EndMode2D();
         DrawFPS(10, 10);
@@ -321,11 +246,18 @@ int main(void)
             DrawText(TextFormat("currentFrame - %.2f",currentFrame),DB_X,DB_Y+150,DB_F,DB_CL);
             //DrawText(TextFormat("frameSpeed - %.2f",frameSpeed),DB_X,DB_Y+25,DB_CL);
             DrawText(TextFormat("framesCounter - %.2f",framesCounter),DB_X,DB_Y+175,DB_F,DB_CL);
-        DrawText(TextFormat("Ready To Poop: 23%"),DB_X,DB_Y+200,DB_F,DB_CL);
+            DrawText(TextFormat("Ready To Poop: 23%"),DB_X,DB_Y+200,DB_F,DB_CL);
         }
         // inventory
-    	int blah = sizeof(sticksArray)/sizeof(sticksArray[0]);
-        DrawText(TextFormat("Sticks: %d",blah),100,30,30,DARKBLUE);
+	
+	 for (int i = 0; i < MAX_STICKS; i++){
+	     	if (sticksArray[i].collected){
+		    sticksArray[i].rect.x = 50 +(i*40);
+		    sticksArray[i].rect.y = 50;
+		    DrawRectangleRec(sticksArray[i].rect,sticksArray[i].color);
+		    //stickCount++;
+            }
+	 }
         EndDrawing();
         //-----------------------------------------------------
     }
@@ -343,7 +275,8 @@ void checkCollisions( EnvItem *envItems, int envItemsLength, Player *player){
         float minDistX, minDistY;  
         topCollision = false;
        
-	for (int i = 1; i < envItemsLength; i++)
+	//int i = NON_BLOCKING_ENVITEMS. Keep background in beginning of array
+	for (int i = 5; i < envItemsLength; i++)
 	{
             Rectangle boxA = envItems[i].rect;
             if (CheckCollisionRecs(boxA, player->rect)){
