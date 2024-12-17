@@ -43,7 +43,7 @@ typedef struct { //in world before collected
 #define BIRCH                 (Color){ 180, 180, 180, 255 }
 #define OAK                   (Color){ 100, 50, 0, 255 }
 #define SPRUCE                (Color){ 100, 150, 150, 255 }
-#969694
+
 #define MAX_STICKS 4
 #define STACK_SIZE 64
 //Item sticksArray[MAX_STICKS]; 
@@ -98,6 +98,7 @@ int main(void)
     player.canJump = false;
 
     Texture2D playerTex = LoadTexture("cat_run.png");        
+    Texture2D chestTex = LoadTexture("chest.png");        
     playerTex.width += 30;
     playerTex.height += 15;
     //Rectangle frameRec = { 0.0f, 0.0f, (float)playerTex.width/4, (float)playerTex.height };
@@ -108,10 +109,12 @@ int main(void)
     bool moving; //walking left or right with A or D
 
     //first items are non blocking/background
-    #define NB_ENVITEMS 7
+    #define NB_ENVITEMS 9
     EnvItem envItems[] = {
  	    // trees
             {{ -1000, -100, 3000, 500 }, SKYBLUE }, //background
+            {{ 330, 329, 20,88 }, GRAY }, //piller
+            {{ 420, 329, 20,88 }, GRAY }, //piller
         //
 	    {{ 90, 320, 25, 80 }, OAK },
 	    {{ 80, 300, 45, 80 }, GREEN },
@@ -124,15 +127,28 @@ int main(void)
 
             // NB_ENVITEMS ENDS
             {{ -1000, 400, 3000, 200 }, DARKGREEN }, //floor
-        /* 3 pixel staggered vertically to climb steps
-            {{ 160, 397, 10,10 }, GRAY }, //steps
-            {{ 170, 394, 10,10 }, GRAY }, //steps
-            {{ 180, 391, 10,10 }, GRAY }, //steps
-            {{ 190, 388, 10,10 }, GRAY }, //steps
-            {{ 200, 385, 10,10 }, GRAY }, //steps
-            {{ 210, 382, 10,10 }, GRAY }, //steps
-            {{ 220, 379, 10,10 }, GRAY }, //steps
-            */
+        // 3 pixel staggered vertically to climb steps
+            {{ 260, 397, 90,10 }, GRAY }, //steps
+            {{ 270, 394, 80,10 }, GRAY }, //steps
+            {{ 280, 391, 70,10 }, GRAY }, //steps
+            {{ 290, 388, 60,10 }, GRAY }, //steps
+            {{ 300, 385, 50,10 }, GRAY }, //steps
+            {{ 310, 382, 40,10 }, GRAY }, //steps
+            {{ 320, 379, 30,10 }, GRAY }, //steps
+        //
+            {{ 320, 379, 100,28 }, GRAY }, //foundation
+            {{ 320, 310, 130,20 }, GRAY }, //roof
+            
+        //
+            {{ 420, 397, 90,10 }, GRAY }, //steps
+            {{ 420, 394, 80,10 }, GRAY }, //steps
+            {{ 420, 391, 70,10 }, GRAY }, //steps
+            {{ 420, 388, 60,10 }, GRAY }, //steps
+            {{ 420, 385, 50,10 }, GRAY }, //steps
+            {{ 420, 382, 40,10 }, GRAY }, //steps
+            {{ 420, 379, 30,10 }, GRAY }, //steps
+            
+            //
             {{ 300, 200, 400, 10 }, DARKBROWN }, //platforms
             //{{ 250, 300, 100, 10 }, DARKBROWN },
             {{ 650, 300, 100, 10 }, DARKBROWN },
@@ -256,6 +272,7 @@ int main(void)
 	     }
 	    }
             // player
+            DrawTexture(chestTex, 365, 350, WHITE);                               // Draw a Texture2D
             DrawTextureRec(playerTex, frameRec, position, WHITE);  //  how do I scale this?
             //DrawRectangleRec(player.rect, BLUE); //old thing before animation
 
