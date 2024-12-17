@@ -14,6 +14,7 @@ gcc knapsack.c -o knapsack -I ../raylib-quickstart/build/external/raylib-master/
 #define DB_F 20
 #define DB_CL                 (Color){ 155, 21, 41, 255 }
 #define TRANSPARENT_BLUE      (Color){ 0, 121, 241, 55 } //for cursor
+#define INVENTORY_GRAY      (Color){ 150, 121, 241, 155 } //for cursor
 #define G 500 
 #define FPS 30 
 #define PLAYER_START_X 130
@@ -98,7 +99,12 @@ int main(void)
     player.canJump = false;
 
     Texture2D playerTex = LoadTexture("cat_run.png");        
+    Vector2 mousePos = {0,0}; //mouse hovers over chest
+    int chestOpen = 0;//click chest
+    int withinChestRange = 0;//click chest
     Texture2D chestTex = LoadTexture("chest.png");        
+    Rectangle chestMouseRect = {365,360,30,20};
+    Rectangle chestRect = {320,330,130,90};
     playerTex.width += 30;
     playerTex.height += 15;
     //Rectangle frameRec = { 0.0f, 0.0f, (float)playerTex.width/4, (float)playerTex.height };
@@ -272,15 +278,34 @@ int main(void)
 	     }
 	    }
             // player
-            DrawTexture(chestTex, 365, 350, WHITE);                               // Draw a Texture2D
+            if (CheckCollisionRecs(player.rect,chestRect)) withinChestRange = 1;
+            else {
+                withinChestRange = 0;
+                chestOpen = 0;
+            }
+	    mousePos  = GetScreenToWorld2D(GetMousePosition(), camera);
+            if (mousePos.x >= chestMouseRect.x && mousePos.x <= chestMouseRect.x + chestMouseRect.width &&
+                mousePos.y >= chestMouseRect.y && mousePos.y <= chestMouseRect.y + chestMouseRect.height) {
+                // Mouse is inside the rectangle, draw the texture
+                DrawTexture(chestTex, 365, 350, WHITE);
+                //DrawRectangleRec(chestRect, PINK);
+                if (IsMouseButtonDown(0)&& withinChestRange) chestOpen = 1;
+            }else if(chestOpen ==1){
+                DrawTexture(chestTex, 365, 350, WHITE);
+            }
+            else{
+                DrawTexture(chestTex, 365, 350, GRAY);                      
+            }
             DrawTextureRec(playerTex, frameRec, position, WHITE);  //  how do I scale this?
             //DrawRectangleRec(player.rect, BLUE); //old thing before animation
+            
 
 	EndMode2D();
         DrawFPS(10, 10);
         if (showDebugInfo){
             DrawText(TextFormat("player position : %.2f, %.2f",player.rect.x,player.rect.y),DB_X,DB_Y+25,DB_F,DB_CL);
-            DrawText(TextFormat("player speed : %.2f",player.speed),DB_X,DB_Y+50,DB_F,DB_CL);
+            //DrawText(TextFormat("player speed : %.2f",player.speed),DB_X,DB_Y+50,DB_F,DB_CL);
+            DrawText(TextFormat("mousePos : %.2f,%.2f",mousePos.x,mousePos.y),DB_X,DB_Y+50,DB_F,DB_CL);
             if (topCollision)DrawText(TextFormat("topCollision - true"),DB_X,DB_Y+75,DB_F,DB_CL);
             if (player.canJump)DrawText(TextFormat("canJump - true"),DB_X,DB_Y+100,DB_F,DB_CL);
             DrawText(TextFormat("Animation"),DB_X,DB_Y+125,DB_F,DB_CL);
@@ -288,9 +313,13 @@ int main(void)
             DrawText(TextFormat("currentFrame - %.2f",currentFrame),DB_X,DB_Y+150,DB_F,DB_CL);
             //DrawText(TextFormat("frameSpeed - %.2f",frameSpeed),DB_X,DB_Y+25,DB_CL);
             DrawText(TextFormat("framesCounter - %.2f",framesCounter),DB_X,DB_Y+175,DB_F,DB_CL);
-            DrawText(TextFormat("Ready To Poop: 23%"),DB_X,DB_Y+200,DB_F,DB_CL);
+            DrawText(TextFormat("chestOpen: %d\nwithinChestRange: %d",chestOpen,withinChestRange),DB_X,DB_Y+200,DB_F,DB_CL);
         }
         // inventory
+        if (IsKeyPressed(KEY_C)) chestOpen = 0;
+        if (chestOpen && withinChestRange){
+            DrawRectangle(screenWidth/2,screenHeight/2,100,100,INVENTORY_GRAY);
+        }
 	
 	 for (int i = 0; i < MAX_STICKS; i++){
 	     	if (sticksArray[i].collected){
