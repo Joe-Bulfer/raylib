@@ -5,8 +5,7 @@ gcc knapsack.c -o knapsack -I ../raylib-quickstart/build/external/raylib-master/
 //now you can pick up sticks. Next integrate existing place block feature to place sticks
 #include "raylib.h"
 #include "raymath.h"
-#include "stdlib.h"
-
+#include "raygui.h"
 #include <stdlib.h> // Required for: copysignf()
 // debug x, y, font, color
 #define DB_X 1090
@@ -14,10 +13,10 @@ gcc knapsack.c -o knapsack -I ../raylib-quickstart/build/external/raylib-master/
 #define DB_F 20
 #define DB_CL                 (Color){ 155, 21, 41, 255 }
 #define TRANSPARENT_BLUE      (Color){ 0, 121, 241, 55 } //for cursor
-#define INVENTORY_GRAY      (Color){ 150, 121, 241, 155 } //for cursor
+#define INVENTORY_GRAY      (Color){ 150, 121, 241, 85 } 
 #define G 500 
 #define FPS 30 
-#define PLAYER_START_X 130
+#define PLAYER_START_X 330
 #define PLAYER_START_Y 370
 #define MIN_PLAYER_FRAME_SPEED 7 
 #define MAX_PLAYER_FRAME_SPEED 10 //idk if this is a float or int
@@ -45,23 +44,22 @@ typedef struct { //in world before collected
 #define OAK                   (Color){ 100, 50, 0, 255 }
 #define SPRUCE                (Color){ 100, 150, 150, 255 }
 
-#define MAX_STICKS 4
+#define MAX_STICKS 9
 #define STACK_SIZE 64
 //Item sticksArray[MAX_STICKS]; 
 Item collectedSticksArray[MAX_STICKS];
 Item sticksArray[MAX_STICKS] = {
     {{-30, 397, 20, 10},3, 1, BIRCH, false},
-    {{-60, 397, 20, 10},3, 1, BIRCH, false},
-    {{30, 397, 20, 10},3, 1, BIRCH, false},
+    {{-80, 397, 20, 10},3, 1, BIRCH, false},
+    {{50, 397, 20, 10},3, 1, BIRCH, false},
 
-    {{20, 397, 20, 10}, 2, 1, OAK, false},
-    {{50, 397, 20, 10}, 2, 1, OAK, false},
+    {{99, 397, 20, 10}, 2, 1, OAK, false},
+    {{78, 397, 20, 10}, 2, 1, OAK, false},
 
-    {{310, 397, 20, 10},3, 1, SPRUCE, false},
-    {{270, 397, 20, 10},3, 1, SPRUCE, false},
-    {{350, 397, 20, 10},3, 1, SPRUCE, false},
+    {{610, 397, 20, 10},3, 1, SPRUCE, false},
+    {{570, 397, 20, 10},3, 1, SPRUCE, false},
+    {{650, 397, 20, 10},3, 1, SPRUCE, false},
 
-    {{300, 200, 20, 10},1, 1, SPRUCE, false}
 };
 
 typedef struct Player {
@@ -84,6 +82,7 @@ bool topCollision = false;
 
 bool showDebugInfo = true;
 
+bool showInventory = true;
 
 int main(void)
 {
@@ -97,6 +96,12 @@ int main(void)
     Vector2 position; //rect.x,rect.y
     player.speed = 0;
     player.canJump = false;
+
+    //Texture2D backgroundTex = LoadTexture("tree background.png");      
+    //the moving background didn't work nice. But I'll keep it's size.
+    //float backgroundTex_xpos = -2700; //moves when player moves
+    //backgroundTex.width+=4900;
+    //backgroundTex.height+=1600;
 
     Texture2D playerTex = LoadTexture("cat_run.png");        
     Vector2 mousePos = {0,0}; //mouse hovers over chest
@@ -117,22 +122,27 @@ int main(void)
     //first items are non blocking/background
     #define NB_ENVITEMS 9
     EnvItem envItems[] = {
- 	    // trees
+ 	    // background
             {{ -1000, -100, 3000, 500 }, SKYBLUE }, //background
-            {{ 330, 329, 20,88 }, GRAY }, //piller
-            {{ 420, 329, 20,88 }, GRAY }, //piller
+            {{ 330, 329, 20,88 }, DARKGRAY }, //piller
+            {{ 420, 329, 20,88 }, DARKGRAY }, //piller
         //
+            // trees
 	    {{ 90, 320, 25, 80 }, OAK },
 	    {{ 80, 300, 45, 80 }, GREEN },
 
 	    {{ -90, 320, 25, 80 }, BIRCH },
 	    {{ -100, 300, 45, 80 }, DARKGREEN },
 
-	    {{ 226, 320, 10, 80 }, SPRUCE },
-	    {{ 213, 300, 35, 80 }, DARKGREEN },
+	    {{ 546, 320, 10, 80 }, SPRUCE },
+	    {{ 533, 300, 35, 80 }, DARKGREEN },
 
             // NB_ENVITEMS ENDS
-            {{ -1000, 400, 3000, 200 }, DARKGREEN }, //floor
+            {{ -200, 400, 3000, 200 }, DARKGREEN }, //floor
+        //                  between in pit/cave
+            {{ -750, 400, 300, 900 }, DARKGREEN  }, //floor
+            {{ -450, 800, 300, 500 }, DARKBROWN  }, //floor
+        //
         // 3 pixel staggered vertically to climb steps
             {{ 260, 397, 90,10 }, GRAY }, //steps
             {{ 270, 394, 80,10 }, GRAY }, //steps
@@ -198,6 +208,7 @@ int main(void)
                 camera.zoom = 3.0;
         }
 
+        //frameRec.height = -(float)playerTex.height / 4;  // Negate to flip left
         if (IsKeyDown(KEY_A)){
             moving = true;
             player.rect.x -= 3;
@@ -251,7 +262,8 @@ int main(void)
         player.rect.y += 1; // wierd thing I have to do, I don't know why.
         //-----------------------------------------------------
 
-        if (IsKeyPressed(KEY_I)) showDebugInfo = !showDebugInfo ;
+        if (IsKeyPressed(KEY_L)) showDebugInfo = !showDebugInfo ;
+        if (IsKeyPressed(KEY_I)) showInventory = !showInventory ;
         // Draw
         //-----------------------------------------------------
         UpdateCameraCenter(&camera, &player, screenWidth, screenHeight);
@@ -260,6 +272,7 @@ int main(void)
         BeginDrawing();
 
 	BeginMode2D(camera);
+        //DrawTexture(backgroundTex,backgroundTex_xpos,-1000,WHITE);
 
 
             ClearBackground(BLACK);
@@ -269,8 +282,14 @@ int main(void)
 
             // sticksArray in world before collected
 	     for (int i = 0; i < MAX_STICKS; i++){
-		    if (CheckCollisionRecs(sticksArray[i].rect, player.rect)){
-			    sticksArray[i].collected = true;
+		    if (CheckCollisionRecs(sticksArray[i].rect, player.rect) && sticksArray[i].collected == false){
+                            DrawText("E to Collect",
+                                sticksArray[i].rect.x,
+                                sticksArray[i].rect.y-30,
+                                     10,BLACK
+                                     );
+                            if (IsKeyPressed(KEY_E)) sticksArray[i].collected = true;
+			    //sticksArray[i].collected = true;
 		    };
 		    if (!sticksArray[i].collected){
 			    DrawRectangleRec(sticksArray[i].rect, sticksArray[i].color);
@@ -284,9 +303,8 @@ int main(void)
                 chestOpen = 0;
             }
 	    mousePos  = GetScreenToWorld2D(GetMousePosition(), camera);
-            if (mousePos.x >= chestMouseRect.x && mousePos.x <= chestMouseRect.x + chestMouseRect.width &&
-                mousePos.y >= chestMouseRect.y && mousePos.y <= chestMouseRect.y + chestMouseRect.height) {
-                // Mouse is inside the rectangle, draw the texture
+            //see if mouse is inside/on chest
+            if(CheckCollisionPointRec(mousePos,chestMouseRect)){ 
                 DrawTexture(chestTex, 365, 350, WHITE);
                 //DrawRectangleRec(chestRect, PINK);
                 if (IsMouseButtonDown(0)&& withinChestRange) chestOpen = 1;
@@ -296,6 +314,9 @@ int main(void)
             else{
                 DrawTexture(chestTex, 365, 350, GRAY);                      
             }
+            DrawRectangleGradientV(-450,400,250,400,BLACK,DARKBROWN);
+            DrawCircle(-300,750,40,GRAY); //boulder
+            
             DrawTextureRec(playerTex, frameRec, position, WHITE);  //  how do I scale this?
             //DrawRectangleRec(player.rect, BLUE); //old thing before animation
             
@@ -317,22 +338,36 @@ int main(void)
         }
         // inventory
         if (IsKeyPressed(KEY_C)) chestOpen = 0;
+
+        // chest inventory menu
         if (chestOpen && withinChestRange){
-            DrawRectangle(screenWidth/2,screenHeight/2,100,100,INVENTORY_GRAY);
+            DrawRectangle(screenWidth/2,screenHeight/2+200,400,200,INVENTORY_GRAY);
+            DrawLine(screenWidth/2+100,screenHeight/2+200,
+                     screenWidth/2+100, screenHeight/2+400, BLACK);
+            DrawLine(screenWidth/2+200,screenHeight/2+200,
+                     screenWidth/2+200, screenHeight/2+400, BLACK);
+            DrawLine(screenWidth/2+300,screenHeight/2+200,
+                     screenWidth/2+300, screenHeight/2+400, BLACK);
+            DrawLine(screenWidth/2,screenHeight/2+300,
+                     screenWidth/2+400, screenHeight/2+300, BLACK);
         }
 	
+        if (showInventory){
 	 for (int i = 0; i < MAX_STICKS; i++){
 	     	if (sticksArray[i].collected){
+                    DrawRectangle(50+(i*40),40,40,40,INVENTORY_GRAY);
 		    sticksArray[i].rect.x = 50 +(i*40);
 		    sticksArray[i].rect.y = 50;
 		    DrawRectangleRec(sticksArray[i].rect,sticksArray[i].color);
 		    //stickCount++;
             }
 	 }
+        }
         EndDrawing();
         //-----------------------------------------------------
     }
-
+    //UnloadTexture(backgroundTex);
+    UnloadTexture(playerTex);
     CloseWindow();        // Close window and OpenGL context
     return 0;
 }
