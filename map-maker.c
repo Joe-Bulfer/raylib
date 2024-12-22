@@ -4,6 +4,7 @@ gcc map-maker.c -o map-maker -I ../raylib-quickstart/build/external/raylib-maste
 
 #include "raylib.h"
 #include "raymath.h"
+#include <stdio.h>
 
 #define DB_X 1000
 #define DB_Y 20
@@ -25,7 +26,10 @@ typedef struct Block {
 typedef struct InventorySlot {
     Rectangle rect;
     Texture2D tex;
+    int texID;
 } InventorySlot;
+
+int editMode = 1;
 
 int canPlace = 0;
 Vector2 mousePos;
@@ -37,11 +41,14 @@ int blockCount = 0;
 
 // Function declarations
 void PlayerControls(Player *player);
+void PlayerControlsWithCollision(Player *player, Block *envItems, int envItemsLength);
 void UpdateCameraCenter(Camera2D *camera, Player *player, int width, int height);
 void UpdateActiveSlot();
 void DrawInventory(InventorySlot *inventory);
 void PlaceBlocks(Vector2 mousePos, InventorySlot *inventory, Block *blocks, int *blockCount);
 void RemoveBlock(Vector2 mousePos, Block *blocks, int *blockCount);
+void SaveMap(Block *blocks, int blockCount);
+void checkCollisions( Block *envItems, int envItemsLength, Player *player);
 
 int main(void)
 {
@@ -56,8 +63,8 @@ int main(void)
     Texture2D sandTex = LoadTexture("rocky-sand-10x10.png");        
     Texture2D dirtTex = LoadTexture("dirt-10x10.png");        
     Texture2D grassTex = LoadTexture("grass-10x10.png");        
-    Texture2D eraserTex = LoadTexture("eraser-10x10.png");        
     Texture2D waterTex = LoadTexture("water-10x10.png");        
+    Texture2D eraserTex = LoadTexture("eraser-10x10.png");        
 
     InventorySlot inventory[INVENTORY_SIZE] = {
         {{30, 30, 80, 80}, sandTex},
@@ -83,8 +90,8 @@ int main(void)
         else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
 
         if (IsKeyPressed(KEY_R)) camera.zoom = 3.0;
+        if (IsKeyPressed(KEY_P)) editMode = !editMode ;
 
-        PlayerControls(&player);
 
         UpdateCameraCenter(&camera, &player, screenWidth, screenHeight);
 
@@ -106,36 +113,50 @@ int main(void)
         mousePos.x = floorf(mousePos.x / 10) * 10.0f;
         mousePos.y = floorf(mousePos.y / 10) * 10.0f;
 
-        switch(activeSlot )
-            {
-            case 0: 
-                PlaceBlocks(mousePos, inventory, blocks, &blockCount);
-                DrawTexture(sandTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-                break;
-            case 1:
-                PlaceBlocks(mousePos, inventory, blocks, &blockCount);
-                DrawTexture(dirtTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-                break;
-            case 2:
-                PlaceBlocks(mousePos, inventory, blocks, &blockCount);
-                DrawTexture(grassTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-                break;
-            case 3:
-                PlaceBlocks(mousePos, inventory, blocks, &blockCount);
-                DrawTexture(waterTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-                break;
-            case 4:
-                //DrawTexture(grassTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-                RemoveBlock(mousePos, blocks, &blockCount);
-                DrawRectangle(mousePos.x, mousePos.y,10,10,ERASER_PINK);
-                break;
+        if (!editMode){
+            player.rect.y += 1;//gravity
+            PlayerControlsWithCollision(&player,blocks,blockCount);
+            DrawRectangleRec(player.rect,RED);
+
+            for (int i = 0;i<blockCount;i++){
+                checkCollisions(&blocks[i],blockCount,&player);
+            }
+        }
+
+        if (editMode){
+            PlayerControls(&player);
+
+            switch(activeSlot )
+                {
+                case 0: 
+                    PlaceBlocks(mousePos, inventory, blocks, &blockCount);
+                    DrawTexture(sandTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+                    break;
+                case 1:
+                    PlaceBlocks(mousePos, inventory, blocks, &blockCount);
+                    DrawTexture(dirtTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+                    break;
+                case 2:
+                    PlaceBlocks(mousePos, inventory, blocks, &blockCount);
+                    DrawTexture(grassTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+                    break;
+                case 3:
+                    PlaceBlocks(mousePos, inventory, blocks, &blockCount);
+                    DrawTexture(waterTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+                    break;
+                case 4:
+                    //DrawTexture(grassTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+                    RemoveBlock(mousePos, blocks, &blockCount);
+                    DrawRectangle(mousePos.x, mousePos.y,10,10,ERASER_PINK);
+                    break;
+            }
         }
 
 
         EndMode2D();
 
         // Draw Inventory UI
-        DrawInventory(inventory);
+        if (editMode) DrawInventory(inventory);
 
         // Draw FPS and other info
         DrawFPS(10, 10);
@@ -145,7 +166,7 @@ int main(void)
 
         EndDrawing();
     }
-
+    //SaveMap(blocks,blockCount);
     // Clean up textures
     for (int i = 0;i<INVENTORY_SIZE;i++){
         UnloadTexture(inventory[i].tex);
@@ -154,6 +175,33 @@ int main(void)
     CloseWindow(); // Close the window and OpenGL context
 
     return 0;
+}
+
+// Function to move the player
+void PlayerControlsWithCollision(Player *player, Block *envItems, int envItemsLength) {
+    // Store the original position before movement
+    Rectangle originalRect = player->rect;
+
+    // Move based on key input
+    if (IsKeyDown(KEY_A)) {
+        player->rect.x -= 4; // Move left
+    } else if (IsKeyDown(KEY_D)) {
+        player->rect.x += 4; // Move right
+    }
+
+    if (IsKeyDown(KEY_W)) {
+        player->rect.y -= 4; // Move up
+    } else if (IsKeyDown(KEY_S)) {
+        player->rect.y += 4; // Move down
+    }
+
+    // Check for collisions after movement
+    checkCollisions(envItems, envItemsLength, player);
+
+    // If collision happened, reset position to original
+    if (CheckCollisionRecs(player->rect, envItems[0].rect)) {
+        player->rect = originalRect; // Revert to original position if collision detected
+    }
 }
 
 // Function to move the player
@@ -248,5 +296,65 @@ void RemoveBlock(Vector2 mousePos, Block *blocks, int *blockCount)
                 break;
             }
         }
+    }
+}
+void SaveMap(Block *blocks, int blockCount) {
+    FILE *file = fopen("saved_map.txt", "w");
+    if (file == NULL) {
+        printf("Failed to open file for saving!\n");
+        return;
+    }
+
+    for (int i = 0; i < blockCount; i++) {
+        // Write the block's position and texture index to the file
+        fprintf(file, "%f,%f,%d\n", blocks[i].rect.x, blocks[i].rect.y, blocks[i].tex);
+    }
+
+    fclose(file);
+    printf("Map saved successfully!\n");
+}
+
+void checkCollisions( Block *envItems, int envItemsLength, Player *player){
+    
+        Vector2 centerA, centerB;
+        Vector2 subtract;
+        Vector2 halfWidthA,halfWidthB;
+        float minDistX, minDistY;  
+        //topCollision = false;
+       
+	//int i = NON_BLOCKING_ENVITEMS. Keep background in beginning of array
+	for (int i = 5; i < envItemsLength; i++)
+	{
+            Rectangle boxA = envItems[i].rect;
+            if (CheckCollisionRecs(boxA, player->rect)){
+                centerA = (Vector2){boxA.x + boxA.width / 2,boxA.y + boxA.height / 2};
+                centerB = (Vector2){player->rect.x + player->rect.width / 2,player->rect.y + player->rect.height / 2}; 
+                subtract = Vector2Subtract(centerA,centerB);
+                halfWidthA = (Vector2){ boxA.width*.5f, boxA.height*.5f };
+                halfWidthB  = (Vector2){ player->rect.width*.5f, player->rect.height*.5f };
+                minDistX = halfWidthA.x + halfWidthB.x - fabsf(subtract.x);
+                minDistY = halfWidthA.y + halfWidthB.y - fabsf(subtract.y);
+                
+                if (minDistX < minDistY) {
+                    //collide left or right
+                    player->rect.x -= copysignf(minDistX, subtract.x); 
+                } else {
+                    //collide top or bottom
+                    if (subtract.y > 0){
+                        //topCollision = true;
+                        //player->speed = 0;
+                        //player->rect.y += 1; //prevent flickering
+                    }
+                    player->rect.y -= copysignf(minDistY, subtract.y); 
+                    //player->speed = 0; // bounce off bottom of object
+                } 
+            }
+        
+        
+        /*
+            else{
+                topCollision = false;
+            }
+       */ 
     }
 }
