@@ -16,6 +16,6 @@ Here's a bunch of examples for Raylib. Feel free to use any of them.
 
 ![](https://github.com/Joe-Bulfer/raylib/blob/master/gameplay/collision-bouncy-ball-gameplay.gif)
 
-### overhead-shooter
+### grenade
 
-![](https://github.com/Joe-Bulfer/raylib/blob/master/gameplay/overhead-shooter-gameplay.gif)
+![](https://github.com/Joe-Bulfer/raylib/blob/master/gameplay/grenade-gameplay.gif)
