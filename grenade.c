@@ -81,7 +81,7 @@ int main(void)
 
     Camera2D camera = { 0 };
     camera.target = player.position;
-    camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
+    //camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     camera.zoom = 2.0f;
 
     SetTargetFPS(60);
@@ -194,6 +194,10 @@ void UpdateCameraCenter(Camera2D *camera, Player *player)
     camera->target = player->position;
 }
 
+//cannon angle doesn't update while WASD is pressed, update here?
+//wait, not the issue, laptop trackpad is locking mouse with key input
+//GPT - add *angleRad
+//void PlayerControls(Player *player, EnvItem *blocks,int *angleRad)
 void PlayerControls(Player *player, EnvItem *blocks)
 {
     Vector2 originalPos = player->position;
@@ -229,6 +233,12 @@ void PlayerControls(Player *player, EnvItem *blocks)
             player->position.y = originalPos.y; // Reset Y if collision occurs
         }
     }
+    /*GPT
+    // Now calculate the cannon's angle based on the player's movement or mouse position
+    Vector2 playerCenter = { player->position.x + 20, player->position.y + 20 }; // Player's center (around the body)
+    *angleRad = atan2(mousePos.y - playerCenter.y, mousePos.x - playerCenter.x);
+    angleDeg = *angleRad * (180 / PI); // Convert angle to degrees
+    */
 }
 
 // only used within PlayerControls on each key WASD
@@ -292,7 +302,7 @@ void CheckGrenadeCollision(Vector2 *grenadePos,float grenadeRadius,float *grenad
 
 void IterateFrame(int *currentFrame,int *currentLine,int *framesCounter,float *frameWidth,float *frameHeight,Rectangle *frameRec,bool *explosionActive){
     (*framesCounter)++;
-    if (*framesCounter > 2)
+    if (*framesCounter > 1)
     {
         (*currentFrame)++;
         if (*currentFrame >= 5)

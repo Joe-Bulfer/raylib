@@ -1,13 +1,16 @@
 /*
-ball now bounces
-next make the ball slow down, shoot multiple, etc.
+difference with this 'advanced' program is that is has Checkcollisions to bounce ball/projectile off blocks/environment (soon to be called world)
+todo:
+    - [ ] add player velocity to projectile velocity, if static WASD movement: is player.movingLeft, or movingW..ASD
+    - [ ] use world.c, world.h and main.c for EnvItems, or see better-EnvItems all in common dir (same implementation)
 */
 /*
-gcc overhead-shooter.c -o overhead-shooter -I ../raylib-quickstart/build/external/raylib-master/src/ -L ../raylib-quickstart/bin/Debug/ -lraylib -lm -lpthread -ldl -lX11 && ./overhead-shooter
+gcc overhead-shooter-advanced.c -o overhead-shooter-advanced -I ../projects/raylib-quickstart/build/external/raylib-master/src/ -L ../projects/raylib-quickstart/bin/Debug/ -lraylib -lm -lpthread -ldl -lX11 && ./overhead-shooter-advanced
 */
 
 #include "raylib.h"
 #include "raymath.h"
+#include <math.h> //for fabs
 
 //#define PI 3.14159
 
@@ -73,6 +76,12 @@ int main(void)
 
     const float cannonLength = 40.0f;
 
+    /*grenade/bomb timer
+    
+    double startTime = 0.0;     // Time when the timer starts
+    double timerDuration = 3.0; // Duration of the timer (in seconds)
+    bool timerRunning = false;  // Whether the timer is running or not
+    */
     while (!WindowShouldClose())
     {
         float deltaTime = GetFrameTime();
@@ -112,6 +121,13 @@ int main(void)
             ballPos.y += ballSpeedY;
             DrawCircleV(ballPos, 5, RED);
         }
+        // slow down the ball/grenade
+        ballSpeedX *= .988; 
+        ballSpeedY *= .988; 
+        if (fabs(ballSpeedX) < 0.40) { ballSpeedX = 0; }
+        if (fabs(ballSpeedY) < 0.40) { ballSpeedY = 0; }
+
+        //projectile collision
         for (int i = 0; i < BLOCKS_LENGTH; i++){ 
             CheckCollision(&ballPos,ballRadius,&ballSpeedX,&ballSpeedY,blocks[i].rect);
         }
@@ -200,6 +216,7 @@ void FireCannon(Vector2 playerPos,Vector2 *ballPos, float *ballSpeedX,float *bal
     *ballSpeedX = cos(angleRad) * speed;
     *ballSpeedY = sin(angleRad) * speed;
 }
+//rename ProjectileCollision
 void CheckCollision(Vector2 *ballPos,float ballRadius,float *ballSpeedX, float *ballSpeedY,Rectangle boxA){
         centerA = (Vector2){boxA.x + boxA.width / 2,boxA.y + boxA.height / 2};
         centerB = (Vector2){ballPos->x,ballPos->y}; 
@@ -214,7 +231,7 @@ void CheckCollision(Vector2 *ballPos,float ballRadius,float *ballSpeedX, float *
 
             // If horizontal collision (left-right)
             if (minDistX < minDistY) {
-                *ballSpeedX *= -1.0f;  // Reverse horizontal speed
+                *ballSpeedX *= -0.8f;  // Reverse horizontal speed
 
                 // Adjust ball position to prevent it from getting stuck
                 if (subtract.x > 0) {
@@ -225,7 +242,7 @@ void CheckCollision(Vector2 *ballPos,float ballRadius,float *ballSpeedX, float *
             }
             // If vertical collision (top-bottom)
             else {
-                *ballSpeedY *= -1.0f;  // Reverse vertical speed
+                *ballSpeedY *= -0.8f;  // Reverse vertical speed
 
                 // Adjust ball position to prevent it from getting stuck
                 if (subtract.y > 0) {
