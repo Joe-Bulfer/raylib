@@ -1,76 +1,29 @@
+//initialize rect, circle and triangle arrays
+//draw each of these in DrawWorld
 #include "world.h"
 
+#define MAX_R 4
 EnvItem world_r[MAX_R] = {
-    {
-        .type = RECTANGLE,
-        .color = BLUE,
-        .rect = (Rectangle){50, 200, 100, 150}
-    },
-    {
-        .type = RECTANGLE,
-        .color = BLUE,
-        .rect = (Rectangle){250, 200, 100, 150}
-    },
-    {
-        .type = RECTANGLE,
-        .color = BLUE,
-        .rect = (Rectangle){450, 200, 100, 150}
-    },
-    {
-        .type = RECTANGLE,
-        .color = BLUE,
-        .rect = (Rectangle){650, 200, 100, 150}
-    },
+    { .type=RECTANGLE, .color=BLUE, .rect={ 50, 200, 100, 150} },
+    { .type=RECTANGLE, .color=BLUE, .rect={250, 200, 100, 150} },
+    { .type=RECTANGLE, .color=BLUE, .rect={450, 200, 100, 150} },
+    { .type=RECTANGLE, .color=BLUE, .rect={650, 200, 100, 150} },
 };
 
+
+#define MAX_C 4
 EnvItem world_c[MAX_C] = {
-    { // Circle
-        .type = CIRCLE,
-        .color = YELLOW,
-        .radius = 50,
-        .position = (Vector2){50, 100}
-    },
-    { // Circle
-        .type = CIRCLE,
-        .color = YELLOW,
-        .radius = 50,
-        .position = (Vector2){150, 100}
-    },
-    { // Circle
-        .type = CIRCLE,
-        .color = YELLOW,
-        .radius = 50,
-        .position = (Vector2){250, 100}
-    },
-    { // Circle
-        .type = CIRCLE,
-        .color = YELLOW,
-        .radius = 50,
-        .position = (Vector2){350, 100}
-    },
+    { .type=CIRCLE, .color=YELLOW, .radius=50, .position={50, 100} },
+    { .type=CIRCLE, .color=YELLOW, .radius=50, .position={150, 100} },
+    { .type=CIRCLE, .color=YELLOW, .radius=50, .position={250, 100} },
+    { .type=CIRCLE, .color=YELLOW, .radius=50, .position={350, 100} },
 };
-
+#define MAX_T 4
 EnvItem world_t[MAX_T] = {
-    { // Triangle
-        .type = TRIANGLE,
-        .color = PINK,
-        .t_points = {{0, 0}, {50, 50}, {100, 0}}
-    },
-    { // Triangle
-        .type = TRIANGLE,
-        .color = GREEN,
-        .t_points = {{100, 0}, {150, 50}, {200, 0}}
-    },
-    { // Triangle
-        .type = TRIANGLE,
-        .color = PINK,
-        .t_points = {{200, 0}, {250, 50}, {300, 0}}
-    },
-    { // Triangle
-        .type = TRIANGLE,
-        .color = PINK,
-        .t_points = {{300, 0}, {350, 50}, {400, 0}}
-    }
+    { .type=TRIANGLE, .color=PINK, .t_points={{0, 0}, {50, 50}, {100, 0}} },
+    { .type=TRIANGLE, .color=GREEN, .t_points={{100, 0}, {150, 50}, {200, 0}} },
+    { .type=TRIANGLE, .color=PINK, .t_points={{200, 0}, {250, 50}, {300, 0}} },
+    { .type=TRIANGLE, .color=PINK, .t_points={{300, 0}, {350, 50}, {400, 0}} }
 };
 
 void DrawWorld(void)

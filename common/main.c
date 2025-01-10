@@ -1,26 +1,44 @@
 /*
-gcc better-envItems.c -o better-envItems -I ../../projects/raylib-quickstart/build/external/raylib-master/src/ -L ../../projects/raylib-quickstart/bin/Debug/ -lraylib -lm -lpthread -ldl -lX11 && ./better-envItems
+gcc main.c world.c player-projectile.c -o main -I . -I ../../projects/raylib-quickstart/build/external/raylib-master/src/ -L ../../projects/raylib-quickstart/bin/Debug/ -lraylib -lm -lpthread -ldl -lX11 && ./main
 */
-#include "raylib.h"
-#include "world.h" // Include the world header
+//#include "raylib.h"
+#include "world.h"
+#include "player-projectile.h"
+#define PL_RADIUS 30 //radius
 
 int main()
 {
-    int screenWidth = 800;
-    int screenHeight = 500;
+    SetTargetFPS(30);
+    const int screenWidth = 800;
+    const int screenHeight = 500;
 
-    InitWindow(screenWidth, screenHeight, "BoilerPlate");
+    Player player = { 0 };
+    player.pos = (Vector2){ 400, 280 };
+    player.color = RAYWHITE;
+    Camera2D camera = { 0 };
+    camera.target = player.pos;
+    camera.zoom = 2.0f;//starting zoom position
+    InitWindow(screenWidth, screenHeight, "idk yet");
 
     while (!WindowShouldClose())
     {
+        UpdateCameraCenter(&camera, &player, screenWidth, screenHeight);
+        CameraZoom(&camera, 1.5, 3);//min max scroll
+        
+        PlayerControls(&player, world_r);
+        //player.pos.y += 3;
+        //if (IsKeyPressed(KEY_SPACE)) player.pos.y + 13;
         BeginDrawing();
         ClearBackground(RED);
-        DrawWorld();  // Call the function to draw world items
+        BeginMode2D(camera);
+        DrawCircleV(player.pos,PL_RADIUS,player.color);
+        DrawWorld();
+        EndMode2D();
+        //debug
         EndDrawing();
     }
 
-    CloseWindow(); // Close the window
+    CloseWindow();
 
     return 0;
 }
-
