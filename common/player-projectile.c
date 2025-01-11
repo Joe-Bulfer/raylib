@@ -8,7 +8,7 @@ void UpdateCameraCenter(Camera2D *camera, Player *player, int width, int height)
     camera->target = (Vector2){ player->pos.x, player->pos.y };
 }
 void CameraZoom(Camera2D *camera, float min, float max){
-    camera->zoom += ((float)GetMouseWheelMove() * 0.05f);
+    camera->zoom += ((float)GetMouseWheelMove() * 0.15f);
 
     if (camera->zoom > max) camera->zoom = max;
     else if (camera->zoom < min) camera->zoom = min;
