@@ -7,9 +7,9 @@ gcc blocks.c -o blocks -I ../../projects/raylib-quickstart/build/external/raylib
 #include <math.h>
 
 #define TRANSPARENT_WHITE (Color){255, 255, 255, 128}
+#define GREY (Color){55, 55, 55, 128}
 //Vector2 mousePos = { 0.0f, 0.0f };
 Vector2 mousePos = { 0 };
-int areaFree = 0;
 
 static Vector2 previousMousePos = {0};
 static bool isDragging = false;
@@ -38,32 +38,52 @@ void CameraDrag(Camera2D *camera) {
         isDragging = false;
     }
 }
-void TransparentCursorTexture(Camera2D *camera,Texture2D text){  
+void TransparentCursorTex(Camera2D *camera,Texture2D tex){  
     mousePos = GetScreenToWorld2D(GetMousePosition(), *camera);
     mousePos.x = floorf(mousePos.x / 10) * 10.0f;
     mousePos.y = floorf(mousePos.y / 10) * 10.0f;
-    DrawTexture(text, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
+    DrawTexture(tex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
 }
 void TransparentCursor(Camera2D *camera){  
     mousePos = GetScreenToWorld2D(GetMousePosition(), *camera);
     mousePos.x = floorf(mousePos.x / 10) * 10.0f;
     mousePos.y = floorf(mousePos.y / 10) * 10.0f;
-    //DrawTexture(sandTex, mousePos.x, mousePos.y, TRANSPARENT_WHITE);
-    DrawRectangle(mousePos.x,mousePos.y,10,10,TRANSPARENT_WHITE);
+    //DrawTexture(sandTex, mousePos.x, mousePos.y, GREY);
+    DrawRectangle(mousePos.x,mousePos.y,10,10,GREY);
 }
 //TransparentCursorColor(Camera2D *camera,Color color){  
 //blockCount is number currently placed,blockLen is MAX_R for world_R array, etc.
-void PlaceBlock(EnvItem **blocks,int blockCount,int blockLen){
+int areaFree = 1;
+
+void PlaceBlock(Rectangle *blocks,int *blockCount,int blockLen,Texture2D *tex,Vector2 mousePos){
     // Check if the spot is already occupied
     // will have to check additional once there are multiple stacks of blocks
-    for (int i = 0; i < blockCount; i++) {
-        Vector2 envPos = (Vector2){ blocks[i]->rect.x, blocks[i]->rect.y };
+    areaFree = 1;
+    for (int i = 0; i < *blockCount; i++) {
+        Vector2 envPos = (Vector2){ blocks[i].x, blocks[i].y };
         if (Vector2Equals(envPos, mousePos)) {
             areaFree  = 0;
             break; }
     }
-    if (IsMouseButtonDown(0) && areaFree && (blockCount < blockLen)){
-        int x = 1;
+    if (IsMouseButtonDown(0) && areaFree && (*blockCount < blockLen)){
+    //if (IsMouseButtonDown(0)){
+        blocks[*blockCount] = (Rectangle){mousePos.x,mousePos.y,10,10};
+        (*blockCount)++;
     }
+    DrawText(TextFormat("mousePos %.1f %.1f",mousePos.x,mousePos.y),100,200,20,BLACK);
 }
 
+void UpdateActiveSlot(int *activeSlot){
+    if (IsKeyPressed(KEY_ONE)) {
+        *activeSlot = 0;
+        //return 0;
+    } else if (IsKeyPressed(KEY_TWO)) {
+        *activeSlot = 1;
+        //return 1;
+    }
+    else if (IsKeyPressed(KEY_THREE)) {
+        *activeSlot = 2;
+        //return 2;
+    }
+    //else return activeSlot
+}
