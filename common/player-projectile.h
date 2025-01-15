@@ -33,6 +33,6 @@ extern float angleDeg;
 
 void UpdateCameraCenter(Camera2D *camera, Player *player, int width, int height);
 void CameraZoom(Camera2D *camera, float max, float min);
-void PlayerControls(Player *player, EnvItem *blocks);
+void PlayerControlsWASD(Player *player, EnvItem *blocks);
 bool IsCollision(Player *player, EnvItem *blocks); //only used within PlsyerControls
 void DebugText(Player player, Camera camera,double elapsedTime,float angleDeg);

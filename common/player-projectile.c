@@ -14,7 +14,8 @@ void CameraZoom(Camera2D *camera, float min, float max){
     else if (camera->zoom < min) camera->zoom = min;
 }
 
-void PlayerControls(Player *player, EnvItem *blocks)
+//for overhead shooter or anything without gravity
+void PlayerControlsWASD(Player *player, EnvItem *blocks)
 {
     Vector2 originalPos = player->pos;
 

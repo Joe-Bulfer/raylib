@@ -5,15 +5,36 @@ gcc blocks-SaveMap.c blocks.c player-projectile.c -o blocks-SaveMap -I ../../pro
 #include "stdio.h" //for SaveMap
 #include "blocks.h"
 #include "player-projectile.h"
-#define CURSOR_COLOR (Color){155, 155, 155, 128}
+//#define CURSOR_COLOR (Color){155, 155, 155, 128} //trasparent grey
+#define ERASER_PINK (Color){255, 105, 180, 128}
 
 //texture and blockID should't be attached to each individual block, only the array, an array of rectangles is enough
+//until time to mine, crafting properties, blocking/non-blocking etc. are created, this Block struct is not needed
 typedef struct Block{
     Rectangle rect;
     //Texture2D text;
     //int blocking; water and background are non blocking
+    //int integrity; //mining and explosions reduce integrity,increasing dark opaque
+    //int blockID; //if player in water, slow down
 }Block;
 //background will not be made of blocks, but one big texture, only inside of structures will be non-blocking blocks
+
+//it's only a stack when in inventory....
+struct stack {
+    int id;
+    Rectangle blocks[64];
+    int blocking;
+    Texture2D tex;
+    //int integrity;//paired with rectangle per block
+};
+
+//basically ids
+enum {
+    grass,
+    dirt,
+    stone
+};
+
 
 //x, y, and id is written to file in SaveMap
 Rectangle grassBlocks[99];//id 0
@@ -47,23 +68,11 @@ int main(){
         BeginDrawing();
         ClearBackground(WHITE);
         BeginMode2D(camera);
-        //TransparentCursor(&camera);
+        //mousePos is floored in TransparentCursor
+        //makes sense cause a cursor could be a precondition for placing or destroying blocks, or interacting with the world grid
         mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-        switch (activeSlot){
-            case 0:
-                TransparentCursorTex(&camera,grassTex);
-                PlaceBlock(grassBlocks,&grassBlockCount,99,&grassTex,mousePos);
-                break;
-            case 1:
-                TransparentCursorTex(&camera,dirtTex);
-                PlaceBlock(dirtBlocks,&dirtBlockCount,99,&dirtTex,mousePos);
-                break;
-            case 2:
-                TransparentCursorTex(&camera,waterTex);
-                PlaceBlock(waterBlocks,&waterBlockCount,99,&waterTex,mousePos);
-                break;
-        }
 
+        //DrawWorld(however many arrays...)
         for (int i = 0; i < grassBlockCount; i++) {
             DrawTexture(grassTex, grassBlocks[i].x, grassBlocks[i].y, WHITE);
         }
@@ -73,36 +82,62 @@ int main(){
         for (int i = 0; i < waterBlockCount; i++) {
             DrawTexture(waterTex, waterBlocks[i].x, waterBlocks[i].y, WHITE);
         }
-        //DrawRectangle(mousePos.x,mousePos.y,10,10,CURSOR_COLOR);
+
+        switch (activeSlot){
+            case 0:
+                TransparentCursorTex(&camera,grassTex);
+                PlaceBlock(grassBlocks,&grassBlockCount,99,&grassTex,mousePos
+                            //make sure other types of blocks aren't under cursor,prevent overlapping blocks
+                           //dirtBlocks,&dirtBlockCount,waterBlocks,&waterBlockCount
+                           );
+                break;
+            case 1:
+                TransparentCursorTex(&camera,dirtTex);
+                PlaceBlock(dirtBlocks,&dirtBlockCount,99,&dirtTex,mousePos);
+                break;
+            case 2:
+                TransparentCursorTex(&camera,waterTex);
+                PlaceBlock(waterBlocks,&waterBlockCount,99,&waterTex,mousePos);
+                break;
+            case 3:
+                TransparentCursorColor(&camera,ERASER_PINK);
+                RemoveBlock_3(grassBlocks,&grassBlockCount,
+                            waterBlocks,&waterBlockCount,
+                            dirtBlocks,&dirtBlockCount,
+                            mousePos);
+                
+                break;
+        }
+
         EndMode2D();
-        //Debug(&mousePos,&camera);
-        DrawText(TextFormat("mousePos %.1f %.1f",mousePos.x,mousePos.y),100,100,20,BLACK);
-        DrawText(TextFormat("grassBlockCount %d",grassBlockCount ),100,130,20,BLACK);
+        //Debug(&camera, ..not sure how to put into function...);
+        DrawText(TextFormat("mousePos %.1f %.1f",mousePos.x,mousePos.y),70,50,20,BLACK);
+        DrawText(TextFormat("water %d/%d",grassBlockCount,99),70,80,20,BLACK);
+        DrawText(TextFormat("dirt %d/%d",dirtBlockCount,99),70,110,20,BLACK);
+        DrawText(TextFormat("water %d/%d",waterBlockCount,99),70,140,20,BLACK);
 
         EndDrawing();
     }
 
     //SaveMap(grassBlocks,dirtBlocks,waterBlocks); //------------------
+    // Write the block's x y position and ID to file
     FILE *file = fopen("blocks-main_SaveMap.txt", "w");
     if (file == NULL) {
         printf("Failed to open file for saving.\n");
         return 1;
     }
     for (int i = 0; i < grassBlockCount; i++) {
-        // Write the block's position and texture index to the file
         fprintf(file, "%.0f,%.0f,%d\n", grassBlocks[i].x, grassBlocks[i].y, 0);
     }
     for (int i = 0; i < dirtBlockCount; i++) {
-        // Write the block's position and texture index to the file
         fprintf(file, "%.0f,%.0f,%d\n", dirtBlocks[i].x, dirtBlocks[i].y, 1);
     }
     for (int i = 0; i < waterBlockCount; i++) {
-        // Write the block's position and texture index to the file
         fprintf(file, "%.0f,%.0f,%d\n", waterBlocks[i].x, waterBlocks[i].y, 2);
     }
 
     fclose(file);
-    //SaveMap(grassBlocks,dirtBlocks,waterBlocks); //------------------
+
     UnloadTexture(grassTex);
     UnloadTexture(dirtTex);
     UnloadTexture(waterTex);
